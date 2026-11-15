@@ -190,8 +190,12 @@ export default function MapSidebar({
       </div>
 
       <div className="flex justify-around gap-2">
-        <button className="bg-gray-600 flex-1 hover:bg-gray-700 text-white py-2 px-4 rounded-lg">
-          Clear Filters
+        <button
+          type="button"
+          onClick={() => onPriceChange(5000)}
+          className="bg-gray-600 flex-1 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
+        >
+          Reset Price
         </button>
         <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
           Show Results
