@@ -23,7 +23,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
   async session({ session, user }) {
     if (session.user) {
-      console.log("Auth session user ID:", session.user.id);
+      console.log("Auth session user ID:", session);
       (session.user as typeof session.user & { role: string }).role =
         (user as typeof user & { role: string }).role;
     }

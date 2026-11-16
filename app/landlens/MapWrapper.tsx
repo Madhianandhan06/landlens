@@ -2,9 +2,11 @@
 "use client";
 
 import { APIProvider, AdvancedMarker, Map, Polygon } from "@vis.gl/react-google-maps";
+import { Phone } from "lucide-react";
 import MapDrawingController from "./MapDrawingController";
 import type { SavedParcel } from "../../types/landlens";
 import { Fragment, useEffect, useRef, useState } from "react";
+import PhoneOtp from "../components/auth/PhoneOtp";
 
 type MapWrapperProps = {
   className?: string;
@@ -13,6 +15,14 @@ type MapWrapperProps = {
   onBoundaryChange: (features: unknown[]) => void;
   parcels: SavedParcel[];
   clearDrawingRequest: number;
+  sidebarOpen: boolean;
+  phoneNumber: string;
+  phoneNumberVerified: boolean | null;
+  onPhoneVerified: (idToken: string) => Promise<void>;
+  onToggleSidebar: () => void;
+  onStartDrawing: () => void;
+  onFinishDrawing: () => void;
+  onCancelDrawing: () => void;
 };
 
 export default function MapWrapper({
@@ -22,6 +32,14 @@ export default function MapWrapper({
   onBoundaryChange,
   parcels,
   clearDrawingRequest,
+  sidebarOpen,
+  phoneNumber,
+  phoneNumberVerified,
+  onPhoneVerified,
+  onToggleSidebar,
+  onStartDrawing,
+  onFinishDrawing,
+  onCancelDrawing,
 }: MapWrapperProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID!;
@@ -30,9 +48,12 @@ export default function MapWrapper({
   const parcelDetailsRef = useRef<HTMLDivElement>(null);
 
   const [imageModel, setImageModel] = useState(false);
+  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
 
   const imageCount = (selectedParcel as SavedParcel & { images?: string[] })?.images?.length ?? 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+
   useEffect(() => {
     if (!selectedParcel) return;
 
@@ -68,11 +89,62 @@ export default function MapWrapper({
   }, [selectedParcel, imageModel]);
 
 
-  console.log(selectedParcel)
+  console.log("Plot:", selectedParcel?.ownerId);
+
+  function handleStartDrawing() {
+    if (phoneNumberVerified === null) return;
+
+    if (phoneNumberVerified && phoneNumber.trim()) {
+      onStartDrawing();
+      return;
+    }
+
+    setPhoneModalOpen(true);
+  }
 
   return (
     <APIProvider apiKey={apiKey}>
       <div className={className}>
+        <div className="absolute right-3 top-3 z-50 flex w-40 flex-col gap-2">
+          <button
+            type="button"
+            aria-controls="landlens-sidebar"
+            aria-expanded={sidebarOpen}
+            className="w-full bg-slate-800 text-white shadow hover:bg-slate-700 active:bg-slate-900"
+            onClick={onToggleSidebar}
+          >
+            {sidebarOpen ? "Hide filters" : "Show filters"}
+          </button>
+
+          {!drawingActive ? (
+            <button
+              type="button"
+              disabled={phoneNumberVerified === null}
+              className="w-full bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:cursor-wait disabled:opacity-60"
+              onClick={handleStartDrawing}
+            >
+              {"Add Property"}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="w-full bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800"
+                onClick={onFinishDrawing}
+              >
+                Finish Boundary
+              </button>
+              <button
+                type="button"
+                className="w-full border-slate-500 bg-slate-800 text-slate-100 hover:bg-slate-700 active:bg-slate-900"
+                onClick={onCancelDrawing}
+              >
+                Cancel Drawing
+              </button>
+            </>
+          )}
+        </div>
+
         <Map
           style={{ width: "100%", height: "100%" }}
           defaultCenter={{ lat: 11.6643, lng: 78.1460 }}
@@ -81,7 +153,6 @@ export default function MapWrapper({
           disableDefaultUI={false}
           mapId={mapId}
         >
-
           {parcels
             .filter(
               (property) =>
@@ -115,7 +186,12 @@ export default function MapWrapper({
                     }}
                   />
                   {parcel.pricePerSquareFoot != null && markerPosition && (
-                    <AdvancedMarker position={markerPosition}>
+                    <AdvancedMarker position={markerPosition}
+                      onClick={() => {
+                        setSelectedParcel(parcel);
+                        console.log("Parcel clicked:", parcel);
+                      }}
+                    >
                       <div className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-white shadow-lg">
                         ₹{parcel.pricePerSquareFoot}/sqft
                       </div>
@@ -132,6 +208,32 @@ export default function MapWrapper({
             clearDrawingRequest={clearDrawingRequest}
           />
         </Map>
+
+        {phoneModalOpen && (
+          <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 p-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="phone-verification-title"
+              className="w-full max-w-md rounded-xl bg-gray-900 p-6 text-white shadow-xl"
+            >
+              <h2
+                id="phone-verification-title"
+                className="mb-4 text-xl font-semibold"
+              >
+                Verify your phone number
+              </h2>
+              <PhoneOtp
+                onVerified={async (idToken) => {
+                  await onPhoneVerified(idToken);
+                  setPhoneModalOpen(false);
+                  onStartDrawing();
+                }}
+                onCancel={() => setPhoneModalOpen(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {imageModel && (
           <div
@@ -189,13 +291,42 @@ export default function MapWrapper({
               >
                 ×
               </button>
-              <h3 className="mb-2 text-lg font-bold">Land Details</h3>
+              {/* <h3 className="mb-2 text-lg font-bold">Land Details</h3> */}
 
-              <div className="mb-2 flex items-center justify-between">
-                <p>{selectedParcel.name}</p>
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-xs text-white">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Property
+                  </p>
+                  <p className="truncate text-lg font-semibold">
+                    {selectedParcel.name}
+                  </p>
+                </div>
+                <span
+                  aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
+                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
+                >
                   {(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0}
                 </span>
+              </div>
+
+              <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Contact phone
+                </p>
+                {selectedParcel.phoneNumber ? (
+                  <a
+                    href={`tel:${selectedParcel.phoneNumber}`}
+                    className="mt-1 flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-emerald-700"
+                  >
+                    <Phone size={16} aria-hidden="true" />
+                    <span>{selectedParcel.phoneNumber}</span>
+                  </a>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Phone number not available
+                  </p>
+                )}
               </div>
 
               <ul className="my-2 no-scrollbar flex gap-2 overflow-x-auto pb-2">

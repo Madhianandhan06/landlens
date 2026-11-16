@@ -12,6 +12,11 @@ import { area } from "@turf/area";
 export default function LandLensPage() {
   const router = useRouter();
   const [maxPrice, setMaxPrice] = useState(5000);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumberVerified, setPhoneNumberVerified] = useState<boolean | null>(
+    null
+  );
 
   // Controls whether the owner can draw a boundary
   const [drawingActive, setDrawingActive] = useState(false);
@@ -59,11 +64,69 @@ export default function LandLensPage() {
     setParcels(data.parcels);
   }, [router]);
 
+  const handlePhoneVerified = useCallback(
+    async (idToken: string) => {
+      const response = await fetch("/api/profile/phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = (await response.json()) as {
+        phoneNumber?: string;
+        phoneNumberVerified?: boolean;
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Could not save your phone number");
+      }
+
+      setPhoneNumber(data.phoneNumber ?? "");
+      setPhoneNumberVerified(data.phoneNumberVerified === true);
+    },
+    []
+  );
+
   useEffect(() => {
     loadParcels().catch((error) =>
       console.error("Could not load parcels:", error)
     );
   }, [loadParcels]);
+
+  useEffect(() => {
+    fetch("/api/profile/phone", { cache: "no-store" })
+      .then(async (response) => {
+        if (response.status === 401) {
+          router.replace("/login");
+          return null;
+        }
+
+        const data = (await response.json()) as {
+          phoneNumber?: string | null;
+          phoneNumberVerified?: boolean;
+          message?: string;
+        };
+        if (!response.ok) {
+          throw new Error(data.message ?? "Could not load phone verification status");
+        }
+
+        return data;
+      })
+      .then((data) => {
+        if (!data) return;
+        setPhoneNumber(data.phoneNumber ?? "");
+        setPhoneNumberVerified(data.phoneNumberVerified === true);
+      })
+      .catch((error) => {
+        console.error("Could not load phone verification status:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not load phone verification status"
+        );
+        setPhoneNumberVerified(false);
+      });
+  }, [router]);
 
   console.log("Current boundary:", boundary);
   const handleBoundaryChange = useCallback(
@@ -74,6 +137,12 @@ export default function LandLensPage() {
     },
     []
   );
+
+  const handleStartDrawing = () => {
+    setParcelSaved(false);
+    setLandprice("");
+    setDrawingActive(true);
+  };
 
   const handleFinishDrawing = () => {
     setDrawingActive(false);
@@ -123,6 +192,9 @@ export default function LandLensPage() {
       formData.append("name", "My Land");
       formData.append("pricePerSquareFoot", landprice);
       formData.append("landtype", landtype);
+      if (phoneNumber) {
+        formData.append("phoneNumber", phoneNumber);
+      }
 
       // Stringify nested objects before appending to FormData
       formData.append("geometry", JSON.stringify(feature.geometry));
@@ -180,14 +252,8 @@ export default function LandLensPage() {
       <MapSidebar
         maxPrice={maxPrice}
         onPriceChange={setMaxPrice}
-        drawingActive={drawingActive}
-        onStartDrawing={() => {
-          setParcelSaved(false);
-          setLandprice("");
-          setDrawingActive(true);
-        }}
-        onFinishDrawing={handleFinishDrawing}
-        onCancelDrawing={handleCancelDrawing}
+        open={sidebarOpen}
+        onStartDrawing={handleStartDrawing}
       />
 
       <section className="relative min-h-0 min-w-0 flex-1">
@@ -198,6 +264,14 @@ export default function LandLensPage() {
           onBoundaryChange={handleBoundaryChange}
           parcels={parcels}
           clearDrawingRequest={clearDrawingRequest}
+          sidebarOpen={sidebarOpen}
+          phoneNumber={phoneNumber}
+          phoneNumberVerified={phoneNumberVerified}
+          onPhoneVerified={handlePhoneVerified}
+          onToggleSidebar={() => setSidebarOpen((open) => !open)}
+          onStartDrawing={handleStartDrawing}
+          onFinishDrawing={handleFinishDrawing}
+          onCancelDrawing={handleCancelDrawing}
         />
 
         {hasFourSidedBoundary && !parcelSaved && (

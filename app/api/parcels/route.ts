@@ -113,6 +113,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const phoneNumber = formData.get("phoneNumber");
+    if (!phoneNumber || typeof phoneNumber !== "string") {
+      return NextResponse.json(
+        { message: "Must verify phone number" },
+        { status: 400 }
+      );
+    }
+
     // 4. Upload all images to Cloudinary concurrently
     const imageUrls = await Promise.all(
       imageFiles.map((file) => uploadToCloudinary(file))
@@ -127,6 +135,7 @@ export async function POST(request: NextRequest) {
       area,
       images: imageUrls,
       ...(landtype ? { landtype } : {}),
+      phoneNumber,
     });
 
     return NextResponse.json(
@@ -160,7 +169,7 @@ export async function GET() {
 
     // Included 'images' and 'landtype' in .select() so your map/frontend receives them
     const parcels = await Parcel.find({ ownerId: session.user.id })
-      .select("_id name geometry area pricePerSquareFoot landtype images")
+      .select("_id ownerId name geometry area pricePerSquareFoot landtype images phoneNumber")
       .lean();
 
     return NextResponse.json({ parcels });
