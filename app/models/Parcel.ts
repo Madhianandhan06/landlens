@@ -21,6 +21,7 @@ type ParcelData = {
   };
   landtype?: LandType;
   images: string[];
+  phoneNumber: string;
 };
 
 const parcelSchema = new Schema<ParcelData>(
@@ -86,6 +87,11 @@ const parcelSchema = new Schema<ParcelData>(
         validator: (v: string[]) => v.length >= 3,
         message: "At least 3 images are required.",
       },
+    },
+    phoneNumber: {
+      type: String,
+      default: "",
+      required: true,
     },
   },
   {

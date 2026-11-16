@@ -16,7 +16,9 @@ export type LandFeature = {
 
 export type SavedParcel = {
   _id: string;
+  ownerId: string;
   name: string;
+  phoneNumber?: string;
   pricePerSquareFoot?: number;
   geometry: PolygonGeometry;
   area: {
