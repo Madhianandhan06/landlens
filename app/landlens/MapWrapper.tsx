@@ -14,6 +14,7 @@ type MapWrapperProps = {
   drawingActive: boolean;
   onBoundaryChange: (features: unknown[]) => void;
   parcels: SavedParcel[];
+  userId: string | null;
   clearDrawingRequest: number;
   sidebarOpen: boolean;
   phoneNumber: string;
@@ -31,6 +32,7 @@ export default function MapWrapper({
   drawingActive,
   onBoundaryChange,
   parcels,
+  userId,
   clearDrawingRequest,
   sidebarOpen,
   phoneNumber,
@@ -89,7 +91,7 @@ export default function MapWrapper({
   }, [selectedParcel, imageModel]);
 
 
-  console.log("Plot:", selectedParcel?.ownerId);
+  console.log("Plot ID:", selectedParcel?._id,"\n","Owner ID:", selectedParcel?.ownerId);
 
   function handleStartDrawing() {
     if (phoneNumberVerified === null) return;
@@ -359,6 +361,10 @@ export default function MapWrapper({
               <span className="text-xs text-red-500 font-bold ">
                 Note: Land Prices are subject to change, <span className="block">These are approximate estimations</span>
               </span>
+
+              {selectedParcel.ownerId === userId && (
+                <p className="bg-red-500 font-extrabold font-style: italic text-white text-center p-2 rounded-lg cursor-pointer">Delete</p>
+              )}
             </div>
           </div>
         )}

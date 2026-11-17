@@ -29,6 +29,7 @@ export default function LandLensPage() {
 
 
   const [parcels, setParcels] = useState<SavedParcel[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
 
   const [clearDrawingRequest, setClearDrawingRequest] = useState(0);
@@ -60,8 +61,12 @@ export default function LandLensPage() {
     }
     if (!response.ok) throw new Error("Could not load parcels");
 
-    const data = (await response.json()) as { parcels: SavedParcel[] };
+    const data = (await response.json()) as {
+      parcels: SavedParcel[];
+      userId: string;
+    };
     setParcels(data.parcels);
+    setUserId(data.userId);
   }, [router]);
 
   const handlePhoneVerified = useCallback(
@@ -263,6 +268,7 @@ export default function LandLensPage() {
           drawingActive={drawingActive}
           onBoundaryChange={handleBoundaryChange}
           parcels={parcels}
+          userId={userId}
           clearDrawingRequest={clearDrawingRequest}
           sidebarOpen={sidebarOpen}
           phoneNumber={phoneNumber}

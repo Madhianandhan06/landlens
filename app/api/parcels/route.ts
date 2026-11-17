@@ -168,11 +168,11 @@ export async function GET() {
     }
 
     // Included 'images' and 'landtype' in .select() so your map/frontend receives them
-    const parcels = await Parcel.find({ ownerId: session.user.id })
+    const parcels = await Parcel.find( {} )
       .select("_id ownerId name geometry area pricePerSquareFoot landtype images phoneNumber")
       .lean();
 
-    return NextResponse.json({ parcels });
+    return NextResponse.json({ parcels, userId: session.user.id });
   } catch (error) {
     console.error("Parcel retrieval error:", error);
 
