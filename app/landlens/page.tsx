@@ -278,6 +278,11 @@ export default function LandLensPage() {
           onStartDrawing={handleStartDrawing}
           onFinishDrawing={handleFinishDrawing}
           onCancelDrawing={handleCancelDrawing}
+          onParcelDeleted={(parcelId) =>
+            setParcels((currentParcels) =>
+              currentParcels.filter((parcel) => parcel._id !== parcelId)
+            )
+          }
         />
 
         {hasFourSidedBoundary && !parcelSaved && (
