@@ -7,7 +7,7 @@ import {
     type ConfirmationResult,
 } from "firebase/auth";
 
-import { auth } from "@/lib/firebase";
+import { getFirebaseAuth } from "@/lib/firebase";
 
 type PhoneOtpProps = {
     onVerified?: (idToken: string) => void | Promise<void>;
@@ -49,6 +49,8 @@ export default function PhoneOtp({ onVerified, onCancel }: PhoneOtpProps) {
 
     const handleSendOtp = async () => {
         try {
+            const auth = getFirebaseAuth();
+
             if (!phone.startsWith("+")) {
                 alert("Enter your phone number with country code, e.g. +919876543210");
                 return;
@@ -75,7 +77,11 @@ export default function PhoneOtp({ onVerified, onCancel }: PhoneOtpProps) {
             alert("OTP sent successfully!");
         } catch (error) {
             console.error("OTP sending failed:", error);
-            alert("Could not send OTP. Check the console.");
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : "Could not send OTP. Check the console."
+            );
         }
     };
     return (
