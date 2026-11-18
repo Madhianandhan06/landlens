@@ -5,7 +5,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import getMongoClient from "./lib/mongodb";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: MongoDBAdapter(getMongoClient),
+  adapter: MongoDBAdapter(getMongoClient, { databaseName: "nextjob" }),
   providers: [
     Google({
       allowDangerousEmailAccountLinking: true,

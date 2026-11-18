@@ -30,6 +30,7 @@ export default function LandLensPage() {
 
   const [parcels, setParcels] = useState<SavedParcel[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
 
   const [clearDrawingRequest, setClearDrawingRequest] = useState(0);
@@ -64,9 +65,11 @@ export default function LandLensPage() {
     const data = (await response.json()) as {
       parcels: SavedParcel[];
       userId: string;
+      role?: string;
     };
     setParcels(data.parcels);
     setUserId(data.userId);
+    setUserRole(data.role ?? null);
   }, [router]);
 
   const handlePhoneVerified = useCallback(
@@ -269,6 +272,7 @@ export default function LandLensPage() {
           onBoundaryChange={handleBoundaryChange}
           parcels={parcels}
           userId={userId}
+          userRole={userRole}
           clearDrawingRequest={clearDrawingRequest}
           sidebarOpen={sidebarOpen}
           phoneNumber={phoneNumber}
