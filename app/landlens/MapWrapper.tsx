@@ -9,6 +9,8 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import PhoneOtp from "../components/auth/PhoneOtp";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+
 type MapWrapperProps = {
   className?: string;
   maxPrice: number;
@@ -16,6 +18,7 @@ type MapWrapperProps = {
   onBoundaryChange: (features: unknown[]) => void;
   parcels: SavedParcel[];
   userId: string | null;
+  userRole: string | null;
   clearDrawingRequest: number;
   sidebarOpen: boolean;
   phoneNumber: string;
@@ -35,6 +38,7 @@ export default function MapWrapper({
   onBoundaryChange,
   parcels,
   userId,
+  userRole,
   clearDrawingRequest,
   sidebarOpen,
   phoneNumber,
@@ -136,8 +140,23 @@ export default function MapWrapper({
   return (
     <APIProvider apiKey={apiKey}>
       <div className={className}>
-        <div className="absolute right-3 top-3 z-50 flex w-40 flex-col gap-2">
-          <button
+        <div className="absolute right-16 top-4 z-50 flex w-40 flex-col gap-2">
+          {userRole === "admin" && (
+            <span className="relative inline-flex w-fit self-end overflow-hidden rounded-full p-[4px] shadow-[0_0_16px_-3px_rgba(239,68,68,0.45)]">
+              <span className="animate-border-spin absolute inset-[-100%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#ef4444_100%)]" />
+              <span className="relative p-6 inline-flex items-center gap-2 rounded-full bg-white/95 px-6 py-2 text-xs font-semibold tracking-wide text-red-700 backdrop-blur-xl dark:bg-zinc-950/90 dark:text-red-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75 [animation-duration:2.2s]" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500 shadow-[0_0_6px_#f87171]" />
+                </span>
+                Admin
+              </span>
+            </span>
+          )}
+        </div>
+        <div className="absolute right-3 mt-12 top-3 z-50 flex w-40 flex-col gap-2">
+
+          <Button
             type="button"
             aria-controls="landlens-sidebar"
             aria-expanded={sidebarOpen}
@@ -145,35 +164,36 @@ export default function MapWrapper({
             onClick={onToggleSidebar}
           >
             {sidebarOpen ? "Hide filters" : "Show filters"}
-          </button>
+          </Button>
 
           {!drawingActive ? (
-            <button
+            <Button 
               type="button"
               disabled={phoneNumberVerified === null}
               className="w-full bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:cursor-wait disabled:opacity-60"
               onClick={handleStartDrawing}
             >
               {"Add Property"}
-            </button>
+            </Button>
           ) : (
             <>
-              <button
+              <Button
                 type="button"
                 className="w-full bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800"
                 onClick={onFinishDrawing}
               >
                 Finish Boundary
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 className="w-full border-slate-500 bg-slate-800 text-slate-100 hover:bg-slate-700 active:bg-slate-900"
                 onClick={onCancelDrawing}
               >
                 Cancel Drawing
-              </button>
+              </Button>
             </>
           )}
+
         </div>
 
         <Map
@@ -391,7 +411,7 @@ export default function MapWrapper({
                 Note: Land Prices are subject to change, <span className="block">These are approximate estimations</span>
               </span>
 
-              {selectedParcel.ownerId === userId && (
+              {(selectedParcel.ownerId === userId || userRole === "admin") && (
                 <button
                   type="button"
                   onClick={() => handleDeleteParcel(selectedParcel._id)}

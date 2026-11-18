@@ -172,7 +172,10 @@ export async function GET() {
       .select("_id ownerId name geometry area pricePerSquareFoot landtype images phoneNumber")
       .lean();
 
-    return NextResponse.json({ parcels, userId: session.user.id });
+    return NextResponse.json(
+      { parcels, userId: session.user.id, role: session.user.role },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Parcel retrieval error:", error);
 

@@ -19,10 +19,12 @@ export async function DELETE(
     }
 
     await connectDB();
-    const parcel = await Parcel.findOneAndDelete({
-      _id: id,
-      ownerId: session.user.id,
-    });
+    const filter: { _id: string; ownerId?: string } = { _id: id };
+    if (session.user.role !== "admin") {
+      filter.ownerId = session.user.id;
+    }
+
+    const parcel = await Parcel.findOneAndDelete(filter);
 
     if (!parcel) {
       return NextResponse.json({ message: "Parcel not found" }, { status: 404 });

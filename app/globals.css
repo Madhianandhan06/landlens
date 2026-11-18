@@ -151,3 +151,14 @@ body {
     scrollbar-width: none;     /* Firefox */
   }
 }
+
+@theme {
+  --animate-border-spin: border-spin 4s linear infinite;
+
+  @keyframes border-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
