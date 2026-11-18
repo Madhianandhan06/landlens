@@ -7,6 +7,7 @@ import MapDrawingController from "./MapDrawingController";
 import type { SavedParcel } from "../../types/landlens";
 import { Fragment, useEffect, useRef, useState } from "react";
 import PhoneOtp from "../components/auth/PhoneOtp";
+import { toast } from "sonner";
 
 type MapWrapperProps = {
   className?: string;
@@ -24,6 +25,7 @@ type MapWrapperProps = {
   onStartDrawing: () => void;
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
+  onParcelDeleted: (parcelId: string) => void;
 };
 
 export default function MapWrapper({
@@ -42,6 +44,7 @@ export default function MapWrapper({
   onStartDrawing,
   onFinishDrawing,
   onCancelDrawing,
+  onParcelDeleted,
 }: MapWrapperProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID!;
@@ -102,6 +105,32 @@ export default function MapWrapper({
     }
 
     setPhoneModalOpen(true);
+  }
+
+  async function handleDeleteParcel(parcelId: string) {
+    if (!userId) {
+      console.error("User ID is not available. Cannot delete parcel.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/parcels/${parcelId}`, {
+        method: "DELETE",
+      });
+      const result = (await response.json()) as { message?: string };
+      if (!response.ok) {
+        throw new Error(result.message ?? "Could not delete parcel");
+      }
+
+      onParcelDeleted(parcelId);
+      setSelectedParcel(null);
+      toast.success(result.message ?? "Parcel deleted successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not delete parcel"
+      );
+      console.error("Could not delete parcel:", error);
+    }
   }
 
   return (
@@ -363,7 +392,13 @@ export default function MapWrapper({
               </span>
 
               {selectedParcel.ownerId === userId && (
-                <p className="bg-red-500 font-extrabold font-style: italic text-white text-center p-2 rounded-lg cursor-pointer">Delete</p>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteParcel(selectedParcel._id)}
+                  className="w-full rounded-lg bg-red-500 p-2 text-center font-extrabold text-white cursor-pointer hover:bg-red-600 active:bg-red-700 mt-4"
+                >
+                  Delete
+                </button>
               )}
             </div>
           </div>
