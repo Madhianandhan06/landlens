@@ -334,25 +334,25 @@ export default function MapWrapper({
               aria-label="Land details"
               className="pointer-events-auto max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-lg bg-white p-4 text-gray-900 shadow-lg sm:max-h-[70dvh] sm:p-6"
             >
-              <button
+              {/* <button
                 type="button"
                 aria-label="Close land details"
                 onClick={() => setSelectedParcel(null)}
                 className="float-right ml-4 text-gray-500 hover:text-gray-900"
               >
                 ×
-              </button>
+              </button> */}
               {/* <h3 className="mb-2 text-lg font-bold">Land Details</h3> */}
 
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="mb-4 flex items-start justify-end gap-3">
+                {/* <div className="min-w-0">
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                     Property
                   </p>
                   <p className="truncate text-lg font-semibold">
                     {selectedParcel.name}
                   </p>
-                </div>
+                </div> */}
                 <span
                   aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
                   className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
