@@ -3,6 +3,7 @@
 import { Search, MapPin, SlidersHorizontal } from "lucide-react";
 
 import { useState } from "react";
+import type { LandMapType } from "../../types/landlens";
 
 type PriceSliderProps = {
   maxPrice: number;
@@ -12,6 +13,8 @@ type PriceSliderProps = {
 type MapSidebarProps = PriceSliderProps & {
   open: boolean;
   onStartDrawing: () => void;
+  mapType: LandMapType;
+  onMapTypeChange: (mapType: LandMapType) => void;
 };
 
 export function PriceSlider({ maxPrice, onPriceChange }: PriceSliderProps) {
@@ -72,19 +75,21 @@ export default function MapSidebar({
   onPriceChange,
   open,
   onStartDrawing,
+  mapType,
+  onMapTypeChange,
 }: MapSidebarProps) {
   return (
     <aside
         id="landlens-sidebar"
         aria-hidden={!open}
         inert={!open}
-        className={`absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain bg-[#111827] text-white transition-[width,padding,border-color] duration-300 ease-in-out motion-reduce:transition-none ${open
-            ? "w-[70%] gap-2 border-b border-white/10 px-4 py-3 md:w-80 md:gap-6 md:border-b-0 md:border-r md:p-5"
+        className={`absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-slate-200 bg-[#111827] text-white transition-[width,padding,border-color] duration-300 ease-in-out motion-reduce:transition-none ${open
+            ? "w-[70%] gap-2 border-b mt-12 bg-[#111827]/85 backdrop-blur-md border-white/10 px-4 py-3 md:w-80 md:gap-6 md:border-b-0 md:border-r md:p-5"
             : "w-0 gap-0 border-0 p-0"
           }`}
       >
         {/* Branding */}
-        <div>
+        {/* <div>
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-xl font-bold tracking-tight md:text-2xl">
               Land<span className="text-emerald-400">Lens</span>
@@ -93,10 +98,7 @@ export default function MapSidebar({
           <p className="text-xs text-gray-400 mt-1">
             Transparent land intelligence
           </p>
-
-          {/* <ButtonGroupSplit className={"bg-orange-600 my-2"}/> */}
-
-        </div>
+        </div> */}
 
         {/* Search */}
         <div>
@@ -109,6 +111,27 @@ export default function MapSidebar({
               placeholder="City, area or survey number"
               className="bg-transparent outline-none text-sm w-full placeholder:text-gray-500"
             />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="font-semibold">Map view</h2>
+          <div className="flex gap-2" role="group" aria-label="Map type">
+            {(["roadmap", "satellite"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                aria-pressed={mapType === type}
+                onClick={() => onMapTypeChange(type)}
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  mapType === type
+                    ? "bg-emerald-500 text-white"
+                    : "bg-[#1f2937] text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                {type === "roadmap" ? "Map" : "Satellite"}
+              </button>
+            ))}
           </div>
         </div>
 

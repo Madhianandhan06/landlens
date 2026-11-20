@@ -2,18 +2,21 @@
 "use client";
 
 import { APIProvider, AdvancedMarker, Map, Polygon } from "@vis.gl/react-google-maps";
-import { Phone } from "lucide-react";
+// import { Phone } from "lucide-react";
 import MapDrawingController from "./MapDrawingController";
-import type { SavedParcel } from "../../types/landlens";
+import type { LandMapType, SavedParcel } from "../../types/landlens";
 import { Fragment, useEffect, useRef, useState } from "react";
 import PhoneOtp from "../components/auth/PhoneOtp";
 import { toast } from "sonner";
 
+import { Pencil } from 'lucide-react';
+import { Phone, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type MapWrapperProps = {
   className?: string;
   maxPrice: number;
+  mapType: LandMapType;
   drawingActive: boolean;
   onBoundaryChange: (features: unknown[]) => void;
   parcels: SavedParcel[];
@@ -34,6 +37,7 @@ type MapWrapperProps = {
 export default function MapWrapper({
   className = "h-full w-full",
   maxPrice,
+  mapType,
   drawingActive,
   onBoundaryChange,
   parcels,
@@ -140,40 +144,57 @@ export default function MapWrapper({
   return (
     <APIProvider apiKey={apiKey}>
       <div className={className}>
-        <div className="absolute right-16 top-4 z-50 flex w-40 flex-col gap-2">
-          {userRole === "admin" && (
-            <span className="relative inline-flex w-fit self-end overflow-hidden rounded-full p-[4px] shadow-[0_0_16px_-3px_rgba(239,68,68,0.45)]">
-              <span className="animate-border-spin absolute inset-[-100%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#ef4444_100%)]" />
-              <span className="relative p-6 inline-flex items-center gap-2 rounded-full bg-white/95 px-6 py-2 text-xs font-semibold tracking-wide text-red-700 backdrop-blur-xl dark:bg-zinc-950/90 dark:text-red-300">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75 [animation-duration:2.2s]" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500 shadow-[0_0_6px_#f87171]" />
-                </span>
+        <header className="absolute inset-x-0 top-0 z-50 flex h-14 items-center justify-between  px-3 text-white bg-slate-900 shadow-sm backdrop-blur sm:px-4">
+
+          <div>
+
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-xl font-bold tracking-tight md:text-2xl">
+                Land<span className="text-emerald-400">Lens</span>
+              </h1>
+            </div>
+
+            <p className="text-xs text-gray-400">
+              Transparent land intelligence
+            </p>
+
+          </div>
+
+          <div className="flex min-w-0 items-center gap-2">
+
+            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
+              {userRole?.[0]?.toUpperCase() ?? "U"}
+            </span>
+
+            {userRole === "admin" && (
+              <span className="ml-2 inline-flex shrink-0 items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                <span className="size-2 rounded-full bg-red-500" aria-hidden="true" />
                 Admin
               </span>
-            </span>
-          )}
-        </div>
-        <div className="absolute right-3 mt-12 top-3 z-50 flex w-40 flex-col gap-2">
+            )}
 
+          </div>
+        </header>
+
+        <div className="absolute right-3 top-14 mt-2 z-50 flex w-40 flex-col items-end gap-2">
           <Button
             type="button"
             aria-controls="landlens-sidebar"
             aria-expanded={sidebarOpen}
-            className="w-full bg-slate-800 text-white shadow hover:bg-slate-700 active:bg-slate-900"
+            className=" w-12 bg-slate-800 text-white shadow hover:bg-slate-700 active:bg-slate-900"
             onClick={onToggleSidebar}
           >
-            {sidebarOpen ? "Hide filters" : "Show filters"}
+            {sidebarOpen ? <X size={20} /> : <SlidersHorizontal size={20} />}
           </Button>
 
           {!drawingActive ? (
             <Button 
               type="button"
               disabled={phoneNumberVerified === null}
-              className="w-full bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:cursor-wait disabled:opacity-60"
+              className="w-12 bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:cursor-wait disabled:opacity-60"
               onClick={handleStartDrawing}
             >
-              {"Add Property"}
+              <Pencil />
             </Button>
           ) : (
             <>
@@ -203,6 +224,9 @@ export default function MapWrapper({
           gestureHandling="greedy"
           disableDefaultUI={false}
           mapId={mapId}
+          mapTypeId={mapType}
+          mapTypeControl={false}
+          fullscreenControl={false}
         >
           {parcels
             .filter(
@@ -326,13 +350,13 @@ export default function MapWrapper({
 
 
         {selectedParcel && !imageModel && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-50 flex items-end justify-center p-3 sm:inset-x-auto sm:h-full  sm:bottom-4 sm:right-4 sm:justify-end sm:p-0">
+          <div className="pointer-events-none absolute  inset-x-0 bottom-0 z-50 flex items-end justify-center p-3 sm:inset-x-auto sm:h-full sm:bottom-4 sm:right-4 sm:justify-end sm:p-0">
             <div
               ref={parcelDetailsRef}
               role="dialog"
               aria-modal="false"
               aria-label="Land details"
-              className="pointer-events-auto max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-lg bg-white p-4 text-gray-900 shadow-lg sm:max-h-[70dvh] sm:p-6"
+              className="pointer-events-auto space-y-2 max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg sm:max-h-[70dvh] sm:p-6"
             >
               {/* <button
                 type="button"
@@ -342,39 +366,22 @@ export default function MapWrapper({
               >
                 ×
               </button> */}
-              {/* <h3 className="mb-2 text-lg font-bold">Land Details</h3> */}
+              <h3 className=" text-center text-lg font-bold">Posted by: <span className="text-emerald-600 ">{selectedParcel.name}</span></h3>
 
-              <div className="mb-4 flex items-start justify-end gap-3">
-                {/* <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Property
-                  </p>
-                  <p className="truncate text-lg font-semibold">
-                    {selectedParcel.name}
-                  </p>
-                </div> */}
-                <span
-                  aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
-                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
-                >
-                  {(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0}
+              <div className="mb-4 flex items-center justify-center gap-1 rounded-lg borde border-gray-200 bg-gray-50 p-3">
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Contact phone:
                 </span>
-              </div>
-
-              <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Contact phone
-                </p>
                 {selectedParcel.phoneNumber ? (
                   <a
                     href={`tel:${selectedParcel.phoneNumber}`}
-                    className="mt-1 flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-emerald-700"
+                    className="flex items-center justify-center gap-2 text-sm font-semibold text-gray-900 hover:text-emerald-700"
                   >
                     <Phone size={16} aria-hidden="true" />
                     <span>{selectedParcel.phoneNumber}</span>
                   </a>
                 ) : (
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="text-sm text-gray-500">
                     Phone number not available
                   </p>
                 )}
@@ -396,20 +403,36 @@ export default function MapWrapper({
                 ))}
               </ul>
 
-              <span>
-                Price:{" "} {selectedParcel.pricePerSquareFoot != null
-                  ? `₹${(
-                    (selectedParcel.pricePerSquareFoot * selectedParcel.area.squareFeet) /
-                    10_000_000
-                  ).toFixed(2)} Cr`
-                  : "Not available"
-                }
-              </span>
-              <p>Area: {selectedParcel.area.squareFeet} sqft</p>
+                {/* <p
+                  aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
+                  className="mx-auto flex h-7 min-w-7 w-fit items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
+                >
+                  {(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0}
+                </p> */}
 
-              <span className="text-xs text-red-500 font-bold ">
-                Note: Land Prices are subject to change, <span className="block">These are approximate estimations</span>
-              </span>
+                <div className="mt-2 flex justify-center items-center  gap-1 rounded-lg p-2 text-sm font-medium text-gray-700">
+
+                  <span>
+                    Price:{" "} {selectedParcel.pricePerSquareFoot != null
+                    ? `₹${(
+                      (selectedParcel.pricePerSquareFoot * selectedParcel.area.squareFeet) /
+                      10_000_000
+                    ).toFixed(2)} Cr`
+                    : "Not available"
+                    }
+                  </span>
+                  <p
+                  aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
+                  className="mx-auto  flex h-7 min-w-7 w-fit items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
+                  >
+                    {(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0}
+                  </p>
+                  <span>Area: {selectedParcel.area.squareFeet} sqft</span>
+                </div>
+
+              <p className="text-[0.55rem] p-2 bg-amber-50 border rounded-lg text-center border-amber-300  text-red-500 font-bold">
+                Note: Land Prices are subject to change These are approximate estimations
+              </p>
 
               {(selectedParcel.ownerId === userId || userRole === "admin") && (
                 <button
