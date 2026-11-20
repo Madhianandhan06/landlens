@@ -84,7 +84,7 @@ export default function MapSidebar({
         aria-hidden={!open}
         inert={!open}
         className={`absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-slate-200 bg-[#111827] text-white transition-[width,padding,border-color] duration-300 ease-in-out motion-reduce:transition-none ${open
-            ? "w-[70%] gap-2 border-b mt-12 bg-[#111827]/85 backdrop-blur-md border-white/10 px-4 py-3 md:w-80 md:gap-6 md:border-b-0 md:border-r md:p-5"
+            ? "w-[70%] gap-2 border-b mt-14 bg-[#111827]/85 backdrop-blur-md border-white/10 px-2 py-3 md:w-80 md:gap-6 md:border-b-0 md:border-r md:py-3 md:px-3"
             : "w-0 gap-0 border-0 p-0"
           }`}
       >
