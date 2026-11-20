@@ -21,7 +21,7 @@ export async function GET() {
 
   const client = await getMongoClient();
   const user = await client
-    .db()
+    .db("nextjob")
     .collection("users")
     .findOne(
       { _id: new ObjectId(session.user.id) },
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 
   const client = await getMongoClient();
   const result = await client
-    .db()
+    .db("nextjob")
     .collection("users")
     .updateOne(
       { _id: new ObjectId(session.user.id) },

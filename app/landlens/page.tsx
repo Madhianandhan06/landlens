@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapSidebar from "../landlens/MapSidebar";
 import MapWrapper from "../landlens/MapWrapper";
-import type { LandFeature, SavedParcel } from "../../types/landlens";
+import type { LandFeature, LandMapType, SavedParcel } from "../../types/landlens";
 import { toast } from "sonner";
 import { area } from "@turf/area";
 
@@ -33,6 +33,8 @@ export default function LandLensPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
 
+  const [mapType, setMapType] = useState<LandMapType>("satellite");
+
   const [clearDrawingRequest, setClearDrawingRequest] = useState(0);
 
 
@@ -48,6 +50,7 @@ export default function LandLensPage() {
   const hasEnoughImages = images.length >= 3;
 
   const [loading, setLoading] = useState(false);
+
 
   const isLandPriceValid =
     landprice.trim() !== "" &&
@@ -262,12 +265,15 @@ export default function LandLensPage() {
         onPriceChange={setMaxPrice}
         open={sidebarOpen}
         onStartDrawing={handleStartDrawing}
+        mapType={mapType}
+        onMapTypeChange={setMapType}
       />
 
       <section className="relative min-h-0 min-w-0 flex-1">
         <MapWrapper
           className="absolute inset-0"
           maxPrice={maxPrice}
+          mapType={mapType}
           drawingActive={drawingActive}
           onBoundaryChange={handleBoundaryChange}
           parcels={parcels}

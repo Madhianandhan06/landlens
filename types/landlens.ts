@@ -26,3 +26,5 @@ export type SavedParcel = {
     squareFeet: number;
   };
 };
+
+export type LandMapType = "roadmap" | "satellite";
