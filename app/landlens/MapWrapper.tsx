@@ -144,7 +144,7 @@ export default function MapWrapper({
   return (
     <APIProvider apiKey={apiKey}>
       <div className={className}>
-        <header className="absolute inset-x-0 top-0 z-50 flex h-14 items-center justify-between  px-3 text-white bg-slate-900 shadow-sm backdrop-blur sm:px-4">
+        <header className="absolute inset-x-0 top-0 z-50 flex h-16 items-center justify-between  px-3 text-white bg-slate-900 shadow-sm backdrop-blur sm:px-4">
 
           <div>
 
