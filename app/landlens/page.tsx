@@ -293,18 +293,36 @@ export default function LandLensPage() {
               currentParcels.filter((parcel) => parcel._id !== parcelId)
             )
           }
+          onParcelUpdated={(updatedParcel) =>
+            setParcels((currentParcels) =>
+              currentParcels.map((parcel) =>
+                parcel._id === updatedParcel._id ? updatedParcel : parcel
+              )
+            )
+          }
+
+          setLandprice={setLandprice}
+          setLandtype={setLandtype}
+          setImages={setImages}
+          areaInSquareFeet={areaInSquareFeet}
+          landtype={landtype}
+          hasEnoughImages={hasEnoughImages}
+          isLandPriceValid={isLandPriceValid}
+          loading={loading}
+          onSaveParcel={handleSaveParcel}
         />
 
         {hasFourSidedBoundary && !parcelSaved && (
-          <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-col space-y-2 rounded-lg bg-orange-600 p-2 text-white shadow-lg">            <input
-            value={landprice}
-            onChange={(e) => setLandprice(e.target.value)}
-            type="number"
-            min="0.01"
-            step="any"
-            className="w-full rounded-lg border-none text-black bg-white p-2 focus:outline-none"
-            placeholder="Price per square feet"
-          />
+          <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-col space-y-2 rounded-lg bg-orange-600 p-2 text-white shadow-lg">            
+            <input
+              value={landprice}
+              onChange={(e) => setLandprice(e.target.value)}
+              type="number"
+              min="0.01"
+              step="any"
+              className="w-full rounded-lg border-none text-black bg-white p-2 focus:outline-none"
+              placeholder="Price per square feet"
+            />
             <div className="rounded-lg bg-white p-2 text-black text-sm">
               <p>
                 Area: {areaInSquareFeet.toLocaleString("en-IN", {

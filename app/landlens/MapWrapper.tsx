@@ -9,9 +9,10 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import PhoneOtp from "../components/auth/PhoneOtp";
 import { toast } from "sonner";
 
-import { Pencil } from 'lucide-react';
+import { Pencil, PencilRuler } from 'lucide-react';
 import { Phone, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { set } from "mongoose";
 
 type MapWrapperProps = {
   className?: string;
@@ -32,6 +33,16 @@ type MapWrapperProps = {
   onFinishDrawing: () => void;
   onCancelDrawing: () => void;
   onParcelDeleted: (parcelId: string) => void;
+  onParcelUpdated: (parcel: SavedParcel) => void;
+  areaInSquareFeet: number;
+  landtype: string;
+  hasEnoughImages: boolean;
+  isLandPriceValid: boolean;
+  loading: boolean;
+  setLandprice: (price: string) => void;
+  setLandtype: (type: string) => void;
+  setImages: (images: File[]) => void;
+  onSaveParcel: () => Promise<void>;
 };
 
 export default function MapWrapper({
@@ -53,12 +64,26 @@ export default function MapWrapper({
   onFinishDrawing,
   onCancelDrawing,
   onParcelDeleted,
+  onParcelUpdated,
+
+  areaInSquareFeet,
+  landtype,
+  hasEnoughImages,
+  isLandPriceValid,
+  loading,
+  setLandprice,
+  setLandtype,
+  setImages,
+  onSaveParcel,
 }: MapWrapperProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID!;
 
   const [selectedParcel, setSelectedParcel] = useState<SavedParcel | null>(null);
   const parcelDetailsRef = useRef<HTMLDivElement>(null);
+  const [landprice, setLandpriceInput] = useState("");
+  const [pricePerSquareFootInput, setPricePerSquareFootInput] = useState("");
+  const [isSavingPrice, setIsSavingPrice] = useState(false);
 
   const [imageModel, setImageModel] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
@@ -66,6 +91,8 @@ export default function MapWrapper({
   const imageCount = (selectedParcel as SavedParcel & { images?: string[] })?.images?.length ?? 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // plot model editing state
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!selectedParcel) return;
@@ -78,6 +105,7 @@ export default function MapWrapper({
         event.target instanceof Node &&
         !parcelDetailsRef.current?.contains(event.target)
       ) {
+        setIsEditing(false); // Reset editing state when closing the details
         setSelectedParcel(null);
       }
     };
@@ -113,6 +141,54 @@ export default function MapWrapper({
     }
 
     setPhoneModalOpen(true);
+  }
+
+  async function handleSaveParcel() {
+    if (!selectedParcel) return;
+
+    const pricePerSquareFoot = Number(pricePerSquareFootInput);
+    if (!Number.isFinite(pricePerSquareFoot) || pricePerSquareFoot < 0.01) {
+      toast.error("Price per square foot must be at least 0.01");
+      return;
+    }
+
+    setIsSavingPrice(true);
+    try{
+        const response = await fetch(`/api/parcels/${selectedParcel._id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            pricePerSquareFoot,
+          }),
+        });
+
+        const result = (await response.json()) as {
+          message?: string;
+          parcel?: SavedParcel;
+        };
+        if (!response.ok || !result.parcel) {
+          throw new Error(result.message ?? "Could not update plot price");
+        }
+
+        setSelectedParcel(result.parcel);
+        onParcelUpdated(result.parcel);
+        setIsEditing(false);
+        toast.success(
+          (result.parcel.pricePerSquareFoot ?? 0) > maxPrice
+            ? "Price updated. This plot is hidden by the current max-price filter."
+            : "Price updated successfully"
+        );
+    } catch (error) {
+      console.error("Error saving parcel:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Could not update plot price"
+      );
+    } finally {
+      setIsSavingPrice(false);
+    }
   }
 
   async function handleDeleteParcel(parcelId: string) {
@@ -358,17 +434,40 @@ export default function MapWrapper({
               aria-label="Land details"
               className="pointer-events-auto space-y-2 max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg sm:max-h-[70dvh] sm:p-6"
             >
-              {/* <button
-                type="button"
-                aria-label="Close land details"
-                onClick={() => setSelectedParcel(null)}
-                className="float-right ml-4 text-gray-500 hover:text-gray-900"
-              >
-                ×
-              </button> */}
-              <h3 className=" text-center text-lg font-bold">Posted by: <span className="text-emerald-600 ">{selectedParcel.name}</span></h3>
 
-              <div className="mb-4 flex items-center justify-center gap-1 rounded-lg borde border-gray-200 bg-gray-50 p-3">
+            <div className={`mb-2 flex items-center justify-center gap-2`}>
+              <h3 className="text-center text-lg font-bold">
+                Posted by: <span className="text-emerald-600">{selectedParcel.name}</span>
+              </h3>
+              {(selectedParcel.ownerId === userId || userRole === "admin") && (
+                <button
+                  type="button"
+                  aria-label="Edit land details"
+                  onClick={() => {
+                    if (isEditing) {
+                      setIsEditing(false);
+                    } else {
+                      setPricePerSquareFootInput(
+                        String(selectedParcel.pricePerSquareFoot ?? "")
+                      );
+                      setIsEditing(true);
+                    }
+                  }}
+                  className="group  bg-emerald-600 p-2 relative text-white rounded-2xl flex items-center justify-center gap-2 text-sm font-semibold text-gray-900 hover:text-emerald-700"
+                >
+                  <PencilRuler size={16} aria-hidden="true" />
+                  
+                  {/* Tooltip */}
+                  <span className="pointer-events-none absolute bottom-6 right-6 my-2 whitespace-nowrap z-100 rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                    Edit land details
+                  </span>
+                </button>
+              )}
+            </div>
+
+
+
+              <div className="mb-4 flex items-center justify-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-3">
                 <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
                   Contact phone:
                 </span>
@@ -402,17 +501,10 @@ export default function MapWrapper({
                   </li>
                 ))}
               </ul>
-
-                {/* <p
-                  aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
-                  className="mx-auto flex h-7 min-w-7 w-fit items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
-                >
-                  {(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0}
-                </p> */}
-
-                <div className="mt-2 flex justify-center items-center  gap-1 rounded-lg p-2 text-sm font-medium text-gray-700">
-
-                  <span>
+                             
+              <div className="flex justify-between items-center  gap-1 rounded-lg px-4 text-sm font-medium text-gray-700">
+              { !isEditing ? (
+                <span>
                     Price:{" "} {selectedParcel.pricePerSquareFoot != null
                     ? `₹${(
                       (selectedParcel.pricePerSquareFoot * selectedParcel.area.squareFeet) /
@@ -421,6 +513,21 @@ export default function MapWrapper({
                     : "Not available"
                     }
                   </span>
+                ) : (
+                  <span>
+                    <label>Price per sqft:</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      value={pricePerSquareFootInput}
+                      onChange={(event) =>
+                        setPricePerSquareFootInput(event.target.value)
+                      }
+                    />
+                  </span>
+                )
+              }
                   <p
                   aria-label={`${(selectedParcel as SavedParcel & { images?: string[] }).images?.length ?? 0} images`}
                   className="mx-auto  flex h-7 min-w-7 w-fit items-center justify-center rounded-full bg-green-100 px-2 text-xs font-semibold text-green-800"
@@ -430,18 +537,32 @@ export default function MapWrapper({
                   <span>Area: {selectedParcel.area.squareFeet} sqft</span>
                 </div>
 
-              <p className="text-[0.55rem] p-2 bg-amber-50 border rounded-lg text-center border-amber-300  text-red-500 font-bold">
-                Note: Land Prices are subject to change These are approximate estimations
-              </p>
+                {selectedParcel.ownerId !== userId && userRole !== "admin" && (
+                  <p className="text-[0.55rem] p-2 bg-amber-50 border rounded-lg text-center border-amber-300  text-red-500 font-bold">
+                    Note: Land Prices are subject to change These are approximate estimations
+                  </p>
+                )}
 
               {(selectedParcel.ownerId === userId || userRole === "admin") && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteParcel(selectedParcel._id)}
-                  className="w-full rounded-lg bg-red-500 p-2 text-center font-extrabold text-white cursor-pointer hover:bg-red-600 active:bg-red-700 mt-4"
-                >
-                  Delete
-                </button>
+                <div>                      
+                  {!isEditing && <button
+                    type="button"
+                    onClick={() => handleDeleteParcel(selectedParcel._id)}
+                    className="w-full rounded-lg bg-red-500 p-2 text-center font-extrabold text-white cursor-pointer hover:bg-red-600 active:bg-red-700 mt-4"
+                  >
+                    {'Delete'}
+                  </button>}
+
+                {isEditing && <button
+                    type="button"
+                    disabled={isSavingPrice}
+                    onClick={handleSaveParcel}
+                    className="w-full rounded-lg bg-green-500 p-2 text-center font-extrabold text-white cursor-pointer hover:bg-green-600 active:bg-green-700 mt-4"
+                  >
+                    {isSavingPrice ? "Saving..." : "Save Changes"}
+                  </button>}
+
+                </div>                
               )}
             </div>
           </div>

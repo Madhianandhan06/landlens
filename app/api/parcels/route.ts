@@ -185,3 +185,40 @@ export async function GET() {
     );
   }
 }
+
+
+export async function PUT(request: NextRequest) {
+  try {
+    await connectDB();
+    
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const { pricePerSquareFoot } = await request.json();
+    const parcels = await Parcel.find({ ownerId: session.user.id });
+
+    await Promise.all(
+      parcels.map(async (parcel) => {
+        parcel.pricePerSquareFoot = pricePerSquareFoot;
+        await parcel.save();
+      })
+    );
+
+    return NextResponse.json(
+      { message: "Price per square foot updated successfully", 
+        parcels, userId: session.user.id, role: session.user.role 
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Parcel retrieval error:", error);
+
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
