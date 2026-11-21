@@ -74,7 +74,6 @@ export default function MapSidebar({
   maxPrice,
   onPriceChange,
   open,
-  onStartDrawing,
   mapType,
   onMapTypeChange,
 }: MapSidebarProps) {
@@ -88,18 +87,6 @@ export default function MapSidebar({
             : "w-0 gap-0 border-0 p-0"
           }`}
       >
-        {/* Branding */}
-        {/* <div>
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-xl font-bold tracking-tight md:text-2xl">
-              Land<span className="text-emerald-400">Lens</span>
-            </h1>
-          </div>
-          <p className="text-xs text-gray-400 mt-1">
-            Transparent land intelligence
-          </p>
-        </div> */}
-
         {/* Search */}
         <div>
           <label className="text-lg font-semibold text-gray-300 mb-2 block">
