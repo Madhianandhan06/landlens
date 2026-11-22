@@ -20,6 +20,7 @@ export type SavedParcel = {
   name: string;
   phoneNumber?: string;
   pricePerSquareFoot?: number;
+  images?: string[];
   geometry: PolygonGeometry;
   area: {
     squareMeters: number;
