@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { Pencil, PencilRuler } from 'lucide-react';
 import { Phone, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { set } from "mongoose";
 
 type MapWrapperProps = {
   className?: string;
@@ -84,6 +83,7 @@ export default function MapWrapper({
   const [landprice, setLandpriceInput] = useState("");
   const [pricePerSquareFootInput, setPricePerSquareFootInput] = useState("");
   const [isSavingPrice, setIsSavingPrice] = useState(false);
+  const [deletingImageUrl, setDeletingImageUrl] = useState<string | null>(null);
 
   const [imageModel, setImageModel] = useState(false);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
@@ -188,6 +188,42 @@ export default function MapWrapper({
       );
     } finally {
       setIsSavingPrice(false);
+    }
+  }
+
+  async function handleDeleteImage(imageUrl: string) {
+    if (!selectedParcel) return;
+
+    setDeletingImageUrl(imageUrl);
+    try {
+      const response = await fetch(`/api/parcels/${selectedParcel._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ imageUrl }),
+      });
+
+      const result = (await response.json()) as {
+        message?: string;
+        parcel?: SavedParcel;
+      };
+      if (!response.ok || !result.parcel) {
+        throw new Error(result.message ?? "Could not delete image");
+      }
+
+      setSelectedParcel(result.parcel);
+      onParcelUpdated(result.parcel);
+      setCurrentImageIndex(0);
+      toast.success("Image deleted successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not delete image"
+      );
+      console.error("Could not delete image:", error);
+    } finally {
+      setDeletingImageUrl(null);
     }
   }
 
@@ -488,16 +524,30 @@ export default function MapWrapper({
 
               <ul className="my-2 no-scrollbar flex gap-2 overflow-x-auto pb-2">
                 {(selectedParcel as SavedParcel & { images?: string[] }).images?.map((image, index) => (
-                  <li key={index} className="w-28 shrink-0">
+                  <li key={image} className="relative w-28 shrink-0 cursor-pointer">
                     <img
                       src={image}
                       alt={`Land ${index + 1}`}
                       onClick={() => {
-                        setCurrentImageIndex(0);
+                        setCurrentImageIndex(index);
                         setImageModel(true);
                       }}
                       className="h-24 w-full rounded-lg object-cover"
                     />
+                  {isEditing && (
+                    <button
+                      type="button"
+                      aria-label={`Delete image ${index + 1}`}
+                      disabled={deletingImageUrl === image}
+                      className="absolute top-0 right-0 cursor-pointer rounded-2xl bg-red-500 px-2 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDeleteImage(image);
+                      }}
+                    >
+                      x
+                    </button>
+                  )}
                   </li>
                 ))}
               </ul>
