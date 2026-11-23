@@ -1,28 +1,8 @@
 import { NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
 import connectDB from "../../../../lib/db";
+import { cloudinary, getCloudinaryPublicId } from "../../../../lib/cloudinary";
 import Parcel from "../../../models/Parcel";
 import { auth } from "@/auth";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-function getCloudinaryPublicId(imageUrl: string): string | null {
-  try {
-    const uploadMarker = "/upload/";
-    const uploadIndex = imageUrl.indexOf(uploadMarker);
-    if (uploadIndex === -1) return null;
-
-    const path = imageUrl.slice(uploadIndex + uploadMarker.length);
-    const withoutVersion = path.replace(/^v\d+\//, "");
-    return withoutVersion.replace(/\.[^/.]+$/, "");
-  } catch {
-    return null;
-  }
-}
 
 export async function PATCH(
   request: Request,
