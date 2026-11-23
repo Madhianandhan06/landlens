@@ -87,6 +87,7 @@ export default function MapWrapper({
 
   const [selectedParcel, setSelectedParcel] = useState<SavedParcel | null>(null);
   const parcelDetailsRef = useRef<HTMLDivElement>(null);
+  const imageViewerRef = useRef<HTMLUListElement>(null);
   const [landprice, setLandpriceInput] = useState("");
   const [pricePerSquareFootInput, setPricePerSquareFootInput] = useState("");
   const [isSavingPrice, setIsSavingPrice] = useState(false);
@@ -99,6 +100,16 @@ export default function MapWrapper({
 
   const imageCount = draftImages.length;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!imageModel || imageCount === 0) return;
+
+    const viewer = imageViewerRef.current;
+    if (!viewer || viewer.clientWidth === 0) return;
+
+    const index = Math.min(currentImageIndex, imageCount - 1);
+    viewer.scrollLeft = index * viewer.clientWidth;
+  }, [imageModel, currentImageIndex, imageCount]);
 
   // plot model editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -484,6 +495,7 @@ export default function MapWrapper({
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
           >
             <ul
+              ref={imageViewerRef}
               onClick={(e) => e.stopPropagation()}
               onScroll={(e) => {
                 const container = e.currentTarget;
