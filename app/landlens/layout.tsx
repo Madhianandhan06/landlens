@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist } from "next/font/google";
 import { Toaster } from "../../components/ui/sonner";
-
+import { TooltipProvider } from "../../components/ui/tooltip";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
@@ -15,10 +15,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <>
       <html lang="en" suppressHydrationWarning>
         <head />
-        <body>
+          <body>
             <Toaster />
-            {children}
-        </body>
+            <TooltipProvider>{children}</TooltipProvider>
+          </body>
       </html>
     </>
   )

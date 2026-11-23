@@ -1,40 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
 import connectDB from "../../../lib/db";
+import { uploadToCloudinary } from "../../../lib/cloudinary";
 import Parcel, { type LandType } from "../../models/Parcel";
 import { auth } from "@/auth";
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Helper function to upload a File buffer to Cloudinary
-async function uploadToCloudinary(file: File): Promise<string> {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  // Cloudinary's upload_stream does not return a Promise
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: "landlens_parcels", // Organizes uploads in a dedicated Cloudinary folder
-        resource_type: "image",
-      },
-      // runs when the upload finishes
-      (error, result) => {
-        if (error || !result) {
-          return reject(error ?? new Error("Cloudinary upload failed"));
-        }
-        resolve(result.secure_url);
-      }
-    );
-
-    uploadStream.end(buffer);
-  });
-}
 
 function isLandType(value: string): value is LandType {
   return (
