@@ -1,1 +1,1 @@
-live link: https://nextjob-pi.vercel.app
+live link: https://landlens-pi.vercel.app
