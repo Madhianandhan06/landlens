@@ -6,6 +6,8 @@ import { APIProvider, AdvancedMarker, Map, Polygon } from "@vis.gl/react-google-
 import MapDrawingController from "./MapDrawingController";
 import type { LandMapType, SavedParcel } from "../../types/landlens";
 import { Fragment, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import PhoneOtp from "../components/auth/PhoneOtp";
 import { toast } from "sonner";
 
@@ -27,7 +29,7 @@ type MapWrapperProps = {
   drawingActive: boolean;
   onBoundaryChange: (features: unknown[]) => void;
   parcels: SavedParcel[];
-  userId: string | null;
+  userId: string | null | undefined;
   userRole: string | null;
   clearDrawingRequest: number;
   sidebarOpen: boolean;
@@ -82,6 +84,7 @@ export default function MapWrapper({
   setImages,
   onSaveParcel,
 }: MapWrapperProps) {
+  const router = useRouter();
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID!;
 
@@ -178,6 +181,11 @@ export default function MapWrapper({
   console.log("Plot ID:", selectedParcel?._id,"\n","Owner ID:", selectedParcel?.ownerId);
 
   function handleStartDrawing() {
+    if (userId === undefined) return;
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
     if (phoneNumberVerified === null) return;
 
     if (phoneNumberVerified && phoneNumber.trim()) {
@@ -322,6 +330,15 @@ export default function MapWrapper({
               </span>
             )}
 
+            {userId === null && (
+              <Link
+                href="/login"
+                className="rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-600"
+              >
+                Sign in
+              </Link>
+            )}
+
           </div>
         </header>
 
@@ -363,7 +380,7 @@ export default function MapWrapper({
                 render={
                   <Button
                     type="button"
-                    disabled={phoneNumberVerified === null}
+                    disabled={userId === undefined || phoneNumberVerified === null}
                     className="w-12 bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:cursor-wait disabled:opacity-60"
                     onClick={handleStartDrawing}
                   >

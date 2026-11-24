@@ -129,20 +129,22 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     await connectDB();
-    
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
 
-    // Included 'images' and 'landtype' in .select() so your map/frontend receives them
-    const parcels = await Parcel.find( {} )
+    const session = await auth();
+    const parcels = await Parcel.find({})
       .select("_id ownerId name geometry area pricePerSquareFoot landtype images phoneNumber")
       .lean();
 
     return NextResponse.json(
-      { parcels, userId: session.user.id, role: session.user.role },
-      { status: 200 }
+      {
+        parcels,
+        userId: session?.user?.id ?? null,
+        role: session?.user?.role ?? null,
+      },
+      {
+        status: 200,
+        headers: { "Cache-Control": "private, no-store" },
+      }
     );
   } catch (error) {
     console.error("Parcel retrieval error:", error);

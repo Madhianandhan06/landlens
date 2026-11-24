@@ -29,7 +29,7 @@ export default function LandLensPage() {
 
 
   const [parcels, setParcels] = useState<SavedParcel[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>();
   const [userRole, setUserRole] = useState<string | null>(null);
 
 
@@ -59,21 +59,17 @@ export default function LandLensPage() {
 
   const loadParcels = useCallback(async () => {
     const response = await fetch("/api/parcels");
-    if (response.status === 401) {
-      router.replace("/login");
-      return;
-    }
     if (!response.ok) throw new Error("Could not load parcels");
 
     const data = (await response.json()) as {
       parcels: SavedParcel[];
-      userId: string;
-      role?: string;
+      userId: string | null;
+      role?: string | null;
     };
     setParcels(data.parcels);
     setUserId(data.userId);
     setUserRole(data.role ?? null);
-  }, [router]);
+  }, []);
 
   const handlePhoneVerified = useCallback(
     async (idToken: string) => {
@@ -108,7 +104,8 @@ export default function LandLensPage() {
     fetch("/api/profile/phone", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 401) {
-          router.replace("/login");
+          setPhoneNumber("");
+          setPhoneNumberVerified(false);
           return null;
         }
 
