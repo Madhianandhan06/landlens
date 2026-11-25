@@ -23,7 +23,7 @@ export function PriceSlider({ maxPrice, onPriceChange }: PriceSliderProps) {
   { console.log("localMaxPrice:", localMaxPrice) }
   return (
     <div>
-      <label className="text-sm text-gray-400 block mb-2">
+      <label className="text-sm text-muted-foreground block mb-2">
         Maximum price / sqft
       </label>
 
@@ -36,7 +36,7 @@ export function PriceSlider({ maxPrice, onPriceChange }: PriceSliderProps) {
           max="10000"
           value={maxPrice}
           autoFocus
-          className="border-0 bg-[#1f2937] text-left rounded-lg px-3 py-2 p-1 w-full border-none text-lg font-bold outline-none"
+          className="border-0 bg-muted text-left rounded-lg px-3 py-2 p-1 w-full border-none text-lg font-bold outline-none"
           onChange={(e) => onPriceChange(Number(e.target.value))}
           onBlur={() => setLocalMaxPrice(false)}
           onKeyDown={(e) => {
@@ -48,7 +48,7 @@ export function PriceSlider({ maxPrice, onPriceChange }: PriceSliderProps) {
         <button
           type="button"
           onClick={() => setLocalMaxPrice(true)}
-          className="bg-[#1f2937] text-left rounded-lg px-3 py-1 p-0 w-full text-lg font-bold"
+          className="bg-muted text-left rounded-lg px-3 py-1 p-0 w-full text-lg font-bold"
         >
           ₹{maxPrice.toLocaleString()}
         </button>
@@ -62,7 +62,7 @@ export function PriceSlider({ maxPrice, onPriceChange }: PriceSliderProps) {
         onChange={(e) => onPriceChange(Number(e.target.value))}
       />
 
-      <div className="flex justify-between text-xs text-gray-500">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>₹100</span>
         <span>₹10,000</span>
       </div>
@@ -82,21 +82,21 @@ export default function MapSidebar({
         id="landlens-sidebar"
         aria-hidden={!open}
         inert={!open}
-        className={`absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-slate-200 bg-[#111827] text-white transition-[width,padding,border-color] duration-300 ease-in-out motion-reduce:transition-none ${open
-            ? "w-[70%] gap-2 border-b mt-14 bg-[#111827]/85 backdrop-blur-md border-white/10 px-2 py-3 md:w-80 md:gap-6 md:border-b-0 md:border-r md:py-3 md:px-3"
+        className={`absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col overflow-x-hidden overflow-y-auto overscroll-contain border-border bg-sidebar text-sidebar-foreground transition-[width,padding,border-color] duration-300 ease-in-out motion-reduce:transition-none ${open
+          ? "w-[70%] gap-2 border-b mt-14 bg-sidebar/95 backdrop-blur-md px-2 py-3 md:w-80 md:gap-6 md:border-b-0 md:border-r md:py-3 md:px-3"
             : "w-0 gap-0 border-0 p-0"
           }`}
       >
         {/* Search */}
         <div>
-          <label className="text-lg font-semibold text-gray-300 mb-2 block">
+          <label className="text-lg font-semibold text-sidebar-foreground mb-2 block">
             Search location
           </label>
-          <div className="flex items-center gap-2 rounded-lg bg-[#1f2937] px-3 py-2.5 md:py-3">
-            <Search size={18} className="text-gray-400" />
+          <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2.5 md:py-3">
+            <Search size={18} className="text-muted-foreground" />
             <input
               placeholder="City, area or survey number"
-              className="bg-transparent outline-none text-sm w-full placeholder:text-gray-500"
+              className="bg-transparent outline-none text-sm w-full placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function MapSidebar({
                 className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
                   mapType === type
                     ? "bg-emerald-500 text-white"
-                    : "bg-[#1f2937] text-gray-300 hover:bg-gray-700"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
                 }`}
               >
                 {type === "roadmap" ? "Map" : "Satellite"}
@@ -130,10 +130,10 @@ export default function MapSidebar({
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 block mb-2">
+            <label className="text-sm text-muted-foreground block mb-2">
               Zoning type
             </label>
-            <select className="w-full rounded-lg bg-[#1f2937] p-2.5 text-sm outline-none md:p-3">
+            <select className="w-full rounded-lg bg-muted p-2.5 text-sm outline-none md:p-3">
               <option>All property types</option>
               <option>Residential</option>
               <option>Commercial</option>
@@ -148,7 +148,7 @@ export default function MapSidebar({
           <button
             type="button"
             onClick={() => onPriceChange(5000)}
-            className="bg-gray-600 flex-1 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
+            className="bg-secondary flex-1 hover:bg-accent text-secondary-foreground py-2 px-4 rounded-lg"
           >
             Reset Price
           </button>
@@ -157,8 +157,8 @@ export default function MapSidebar({
           </button>
         </div>
         {/* Location */}
-        <div className="mt-auto border-t border-white/10 pt-2 md:pt-4">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="mt-auto border-t border-sidebar-border pt-2 md:pt-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin size={16} />
             <span>Explore land opportunities</span>
           </div>

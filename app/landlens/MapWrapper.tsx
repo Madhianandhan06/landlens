@@ -11,10 +11,12 @@ import { useRouter } from "next/navigation";
 import PhoneOtp from "../components/auth/PhoneOtp";
 import { toast } from "sonner";
 
-import { Pencil, PencilRuler } from 'lucide-react';
+import { Pencil, PencilRuler, Moon, Sun } from 'lucide-react';
 import { Phone, SlidersHorizontal, X } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { ImageUp } from 'lucide-react';
+import { formatLandArea } from "@/lib/utils";
 
 import {
   Tooltip,
@@ -85,6 +87,8 @@ export default function MapWrapper({
   onSaveParcel,
 }: MapWrapperProps) {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID!;
 
@@ -103,6 +107,10 @@ export default function MapWrapper({
 
   const imageCount = draftImages.length;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    setThemeMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!imageModel || imageCount === 0) return;
@@ -141,6 +149,12 @@ export default function MapWrapper({
     if (!selectedParcel) return;
 
     const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest("[data-preserve-parcel-open]")
+      ) {
+        return;
+      }
       // Do not close selectedParcel if the image modal is currently open
       if (imageModel) return;
 
@@ -301,7 +315,7 @@ export default function MapWrapper({
   return (
     <APIProvider apiKey={apiKey}>
       <div className={className}>
-        <header className="absolute inset-x-0 top-0 z-50 flex h-16 items-center justify-between  px-3 text-white bg-slate-900 shadow-sm backdrop-blur sm:px-4">
+        <header className="absolute inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/95 px-3 text-foreground shadow-sm backdrop-blur sm:px-4">
 
           <div>
 
@@ -318,6 +332,34 @@ export default function MapWrapper({
           </div>
 
           <div className="flex min-w-0 items-center gap-2">
+
+            {themeMounted && (
+              <Button
+                type="button"
+                data-preserve-parcel-open
+                size="icon"
+                variant="ghost"
+                aria-label={
+                  resolvedTheme === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                title={
+                  resolvedTheme === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                onClick={() =>
+                  setTheme(resolvedTheme === "dark" ? "light" : "dark")
+                }
+              >
+                {resolvedTheme === "dark" ? (
+                  <Sun size={18} aria-hidden="true" />
+                ) : (
+                  <Moon size={18} aria-hidden="true" />
+                )}
+              </Button>
+            )}
 
             <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">
               {userRole?.[0]?.toUpperCase() ?? "U"}
@@ -547,13 +589,13 @@ export default function MapWrapper({
 
 
         {selectedParcel && !imageModel && (
-          <div className="pointer-events-none absolute  inset-x-0 bottom-0 z-50 flex items-end justify-center p-3 sm:inset-x-auto sm:h-full sm:bottom-4 sm:right-4 sm:justify-end sm:p-0">
+          <div className={`pointer-events-none absolute  inset-x-0 bottom-0 z-50 flex items-end justify-center p-3 sm:inset-x-auto sm:h-full sm:bottom-4 sm:right-4 sm:justify-end sm:p-0`}>
             <div
               ref={parcelDetailsRef}
               role="dialog"
               aria-modal="false"
               aria-label="Land details"
-              className="pointer-events-auto space-y-2 max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-lg bg-white p-6 text-gray-900 shadow-lg sm:max-h-[70dvh] sm:p-6"
+              className={`pointer-events-auto ${resolvedTheme === "dark" ? 'bg-slate-900 text-white' : 'bg-white'} space-y-2 max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-lg p-6 font-bold shadow-lg sm:max-h-[70dvh] sm:p-6`}
             >
 
             <div className={`mb-2 flex items-center justify-center gap-2`}>
@@ -680,7 +722,7 @@ export default function MapWrapper({
                 </p>
               )}
                              
-              <div className="flex justify-between items-center  gap-1 rounded-lg px-4 text-sm font-medium text-gray-700">
+              <div className="flex justify-between items-center  gap-1 rounded-lg px-4 text-sm font-medium ">
               { !isEditing ? (
                 <span>
                     Price:{" "} {selectedParcel.pricePerSquareFoot != null
@@ -712,7 +754,7 @@ export default function MapWrapper({
                   >
                     {imageCount}
                   </p>
-                  <span>Area: {selectedParcel.area.squareFeet} sqft</span>
+                  <span>Area: {formatLandArea(selectedParcel.area.squareFeet)}</span>
                 </div>
 
                 {selectedParcel.ownerId !== userId && userRole !== "admin" && (
