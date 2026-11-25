@@ -8,6 +8,7 @@ import MapWrapper from "../landlens/MapWrapper";
 import type { LandFeature, LandMapType, SavedParcel } from "../../types/landlens";
 import { toast } from "sonner";
 import { area } from "@turf/area";
+import { formatLandArea } from "@/lib/utils";
 
 export default function LandLensPage() {
   const router = useRouter();
@@ -255,7 +256,7 @@ export default function LandLensPage() {
   console.log(hasFourSidedBoundary)
 
   return (
-    <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-[#0b1120] md:flex-row">
+    <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground md:flex-row">
 
       <MapSidebar
         maxPrice={maxPrice}
@@ -322,9 +323,7 @@ export default function LandLensPage() {
             />
             <div className="rounded-lg bg-white p-2 text-black text-sm">
               <p>
-                Area: {areaInSquareFeet.toLocaleString("en-IN", {
-                  maximumFractionDigits: 2,
-                })} sqft
+                Area: {formatLandArea(areaInSquareFeet)}
               </p>
             </div>
             <div>
