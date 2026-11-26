@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MapSidebar from "../landlens/MapSidebar";
 import MapWrapper from "../landlens/MapWrapper";
@@ -24,6 +24,7 @@ export default function LandLensPage() {
 
   // Stores the drawn GeoJSON features
   const [boundary, setBoundary] = useState<LandFeature[]>([]);
+  const boundaryRef = useRef<LandFeature[]>([]);
 
 
   const [parcelSaved, setParcelSaved] = useState(false);
@@ -141,6 +142,7 @@ export default function LandLensPage() {
   const handleBoundaryChange = useCallback(
     (features: unknown[]) => {
       const landFeatures = features as LandFeature[];
+      boundaryRef.current = landFeatures;
       setBoundary(landFeatures);
       console.log("Land boundary:", landFeatures);
     },
@@ -160,7 +162,9 @@ export default function LandLensPage() {
 
   const handleCancelDrawing = () => {
     setDrawingActive(false);
+    boundaryRef.current = [];
     setBoundary([]);
+    setClearDrawingRequest((request) => request + 1);
   };
 
 
@@ -186,7 +190,7 @@ export default function LandLensPage() {
 
   async function handleSaveParcel() {
     setLoading(true);
-    const feature = boundary[0];
+    const feature = boundaryRef.current[0];
 
     if (!feature) {
       alert("Draw a boundary first");
@@ -197,6 +201,8 @@ export default function LandLensPage() {
     if (!isLandPriceValid || !hasEnoughImages) return;
 
     try {
+      const currentAreaInSquareMeters = area(feature);
+      const currentAreaInSquareFeet = currentAreaInSquareMeters * 10.7639104167;
       const formData = new FormData();
       formData.append("name", "My Land");
       formData.append("pricePerSquareFoot", landprice);
@@ -210,8 +216,8 @@ export default function LandLensPage() {
       formData.append(
         "area",
         JSON.stringify({
-          squareMeters: Number(areaInSquareMeters.toFixed(2)),
-          squareFeet: Number(areaInSquareFeet.toFixed(2)),
+          squareMeters: Number(currentAreaInSquareMeters.toFixed(2)),
+          squareFeet: Number(currentAreaInSquareFeet.toFixed(2)),
         })
       );
 
@@ -240,6 +246,8 @@ export default function LandLensPage() {
       toast.success(result.message ?? "Parcel saved");
       setDrawingActive(false);
       setImages([]); // Reset selected images
+      boundaryRef.current = [];
+      setBoundary([]);
       setClearDrawingRequest((request) => request + 1);
       await loadParcels();
       setParcelSaved(true);
