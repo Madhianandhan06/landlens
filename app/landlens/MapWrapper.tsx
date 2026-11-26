@@ -3,15 +3,18 @@
 
 import { APIProvider, AdvancedMarker, Map, Polygon } from "@vis.gl/react-google-maps";
 // import { Phone } from "lucide-react";
-import MapDrawingController from "./MapDrawingController";
+import MapDrawingController, {
+  type DrawingActions,
+  type DrawingHistoryState,
+} from "./MapDrawingController";
 import type { LandMapType, SavedParcel } from "../../types/landlens";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhoneOtp from "../components/auth/PhoneOtp";
 import { toast } from "sonner";
 
-import { Pencil, PencilRuler, Moon, Sun } from 'lucide-react';
+import { Pencil, PencilRuler, Moon, Redo2, Sun, Undo2 } from 'lucide-react';
 import { Phone, SlidersHorizontal, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -107,6 +110,24 @@ export default function MapWrapper({
 
   const imageCount = draftImages.length;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [drawingHistory, setDrawingHistory] = useState<DrawingHistoryState>({
+    canUndo: false,
+    canRedo: false,
+  });
+  const drawingActionsRef = useRef<DrawingActions | null>(null);
+
+  const handleDrawingActionsReady = useCallback(
+    (actions: DrawingActions | null) => {
+      drawingActionsRef.current = actions;
+    },
+    []
+  );
+  const handleHistoryStateChange = useCallback(
+    (state: DrawingHistoryState) => {
+      setDrawingHistory(state);
+    },
+    []
+  );
 
   useEffect(() => {
     setThemeMounted(true);
@@ -436,6 +457,28 @@ export default function MapWrapper({
             </Tooltip>
           ) : (
             <>
+              <div className="flex w-full gap-2">
+                <Button
+                  type="button"
+                  className="flex-1 border-slate-500 bg-slate-800 text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!drawingHistory.canUndo}
+                  aria-label="Undo drawing"
+                  onClick={() => drawingActionsRef.current?.undo()}
+                >
+                  <Undo2 size={16} aria-hidden="true" />
+                  Undo
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 border-slate-500 bg-slate-800 text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!drawingHistory.canRedo}
+                  aria-label="Redo drawing"
+                  onClick={() => drawingActionsRef.current?.redo()}
+                >
+                  <Redo2 size={16} aria-hidden="true" />
+                  Redo
+                </Button>
+              </div>
               <Button
                 type="button"
                 className="w-full bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800"
@@ -518,6 +561,8 @@ export default function MapWrapper({
           <MapDrawingController
             active={drawingActive}
             onBoundaryChange={onBoundaryChange}
+            onHistoryStateChange={handleHistoryStateChange}
+            onDrawingActionsReady={handleDrawingActionsReady}
             clearDrawingRequest={clearDrawingRequest}
           />
         </Map>

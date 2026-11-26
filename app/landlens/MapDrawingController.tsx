@@ -6,6 +6,8 @@ import { useMap } from "@vis.gl/react-google-maps";
 
 import {
   TerraDraw,
+  TerraDrawModeUndoRedo,
+  TerraDrawSessionUndoRedo,
   TerraDrawPolygonMode,
   TerraDrawSelectMode,
 } from "terra-draw";
@@ -15,13 +17,26 @@ import { TerraDrawGoogleMapsAdapter } from "terra-draw-google-maps-adapter";
 type Props = {
   active: boolean;
   onBoundaryChange: (features: unknown[]) => void;
+  onHistoryStateChange: (state: DrawingHistoryState) => void;
+  onDrawingActionsReady: (actions: DrawingActions | null) => void;
   clearDrawingRequest: number;
 };
 
+export type DrawingHistoryState = {
+  canUndo: boolean;
+  canRedo: boolean;
+};
+
+export type DrawingActions = {
+  undo: () => void;
+  redo: () => void;
+};
 
 export default function MapDrawingController({
   active,
   onBoundaryChange,
+  onHistoryStateChange,
+  onDrawingActionsReady,
   clearDrawingRequest,
 }: Props) {
   const map = useMap();
@@ -65,19 +80,48 @@ export default function MapDrawingController({
             },
           }),
         ],
+        undoRedo: {
+          modeLevel: new TerraDrawModeUndoRedo(),
+          sessionLevel: new TerraDrawSessionUndoRedo(),
+        },
       });
 
       drawRef.current = draw;
+
+      const updateHistoryState = () => {
+        if (!draw) return;
+
+        onHistoryStateChange({
+          canUndo: draw.canUndo(),
+          canRedo: draw.canRedo(),
+        });
+      };
+
+      const syncSnapshot = () => {
+        if (!draw) return;
+
+        onBoundaryChange(draw.getSnapshot());
+        updateHistoryState();
+      };
 
       draw.on("ready", () => {
         draw?.setMode(activeRef.current ? "polygon" : "select");
       });
 
-      draw.on("change", () => {
-        if (draw) onBoundaryChange(draw.getSnapshot());
+      draw.on("change", syncSnapshot);
+      draw.on("history", updateHistoryState);
+
+      onDrawingActionsReady({
+        undo: () => {
+          if (draw?.undo()) syncSnapshot();
+        },
+        redo: () => {
+          if (draw?.redo()) syncSnapshot();
+        },
       });
 
       draw.start();
+      updateHistoryState();
     };
 
     const observer = new MutationObserver(startDrawing);
@@ -91,10 +135,17 @@ export default function MapDrawingController({
 
     return () => {
       observer.disconnect();
+      onDrawingActionsReady(null);
+      onHistoryStateChange({ canUndo: false, canRedo: false });
       draw?.stop();
       if (drawRef.current === draw) drawRef.current = null;
     };
-  }, [map, onBoundaryChange]);
+  }, [
+    map,
+    onBoundaryChange,
+    onDrawingActionsReady,
+    onHistoryStateChange,
+  ]);
 
   // Switch between drawing and selecting modes
   useEffect(() => {
@@ -110,9 +161,12 @@ export default function MapDrawingController({
     if (clearDrawingRequestRef.current === clearDrawingRequest) return;
 
     clearDrawingRequestRef.current = clearDrawingRequest;
-    drawRef.current?.clear();
+    const draw = drawRef.current;
+    draw?.clear();
+    draw?.clearUndoRedoHistory();
     onBoundaryChange([]);
-  }, [clearDrawingRequest, onBoundaryChange]);
+    onHistoryStateChange({ canUndo: false, canRedo: false });
+  }, [clearDrawingRequest, onBoundaryChange, onHistoryStateChange]);
 
   return null;
 }
